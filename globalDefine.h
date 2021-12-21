@@ -16,6 +16,10 @@
 
 #define	OP_OPT_BYPASS			3
 
+#define	OP_OPT_TEST_CLI			4
+#define	OP_OPT_TEST_GUI			5
+
+
 
 #define MAXBUFFER					256
 

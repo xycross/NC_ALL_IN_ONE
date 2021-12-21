@@ -28,10 +28,17 @@ static unsigned char cursor_pos = 0;
 static char prompt_cursor_pos;
 
 //struct command commands[MAX_CMDS] = 
-extern struct command commands[2];
+extern struct command SMUX_commands[MAX_CMDS];
 
 //static uint8_t num_commands = 2;
-extern unsigned char num_commands;
+extern unsigned char SMUX_num_commands;
+
+
+extern struct command TEST_CLI_commands[MAX_CMDS];
+
+//static uint8_t num_commands = 2;
+extern unsigned char TEST_CLI_num_commands;
+
 
 unsigned int sub_tick;
 
@@ -52,6 +59,8 @@ unsigned char DEBUG_RX_SAVE, DEBUG_RX_PROCESS;
 
 
 unsigned char HISTORY_SAVE, HISTORY_CURRENT;
+
+unsigned char cli_which;
 
 
 #if 1
@@ -195,6 +204,8 @@ void cli_loop(unsigned int sleep_ticks)
 	}
 }
 
+
+#if 0
 bool cli_register_command(const char *name, cli_cmd_main_function cmd_func)
 {
 	if (num_commands >= MAX_CMDS) {
@@ -229,6 +240,8 @@ bool cli_deregister_command(const char *name)
 
 	return false;
 }
+
+#endif
 
 
 // ----------------------------------------------------------
@@ -559,37 +572,79 @@ static int execute_command(void)
 
 	if (argv[0] != NULL)
 	{
-		for (i = 0; i < num_commands; i++) {
-			if (strcmp(argv[0], commands[i].name) == 0) {
-
-				char *token = strtok_r(NULL, " \t", &saveptr);
-
-				while(token != NULL && argc != MAX_CMD_ARGS) {
-					argv[argc++] = token;
-					token = strtok_r(NULL, " \t", &saveptr);
-				}
-
-//				return commands[i].cmd_func(rx, tx, argc, argv);
-				HISTORY_CURRENT = HISTORY_SAVE;
-				memcpy(history_cmd_line[HISTORY_SAVE], buffer_cmd_line, cmd_line_len + 1);
-				
-				if(++HISTORY_SAVE >= MAX_HISTORY)
+		if(cli_which == DEF_CLI_WHICH_SMUX)
+		{
+			for (i = 0; i < SMUX_num_commands; i++) 
+			{
+				if (strcmp(argv[0], SMUX_commands[i].name) == 0) 
 				{
-					HISTORY_SAVE = 0;
+
+					char *token = strtok_r(NULL, " \t", &saveptr);
+
+					while(token != NULL && argc != MAX_CMD_ARGS) {
+						argv[argc++] = token;
+						token = strtok_r(NULL, " \t", &saveptr);
+					}
+
+	//				return commands[i].cmd_func(rx, tx, argc, argv);
+					HISTORY_CURRENT = HISTORY_SAVE;
+					memcpy(history_cmd_line[HISTORY_SAVE], buffer_cmd_line, cmd_line_len + 1);
+					
+					if(++HISTORY_SAVE >= MAX_HISTORY)
+					{
+						HISTORY_SAVE = 0;
+					}
+					
+					return SMUX_commands[i].cmd_func(argc, argv);
+
 				}
-				
-				return commands[i].cmd_func(argc, argv);
-
 			}
-		}
 
-		if (strcmp(argv[0], "help") == 0) {
-			help_command();
+			if (strcmp(argv[0], "help") == 0) {
+				help_command();
+				return -1;
+			}
+
+			debugprintf("Command not found.\r\n");
 			return -1;
 		}
-
-		debugprintf("Command not found.\r\n");
-		return -1;
+		
+		else if(cli_which == DEF_CLI_WHICH_COMM_MON_CLI)
+		{
+			for (i = 0; i < TEST_CLI_num_commands; i++) 
+			{
+				if (strcmp(argv[0], TEST_CLI_commands[i].name) == 0) 
+				{
+	
+					char *token = strtok_r(NULL, " \t", &saveptr);
+	
+					while(token != NULL && argc != MAX_CMD_ARGS) {
+						argv[argc++] = token;
+						token = strtok_r(NULL, " \t", &saveptr);
+					}
+	
+	//				return commands[i].cmd_func(rx, tx, argc, argv);
+					HISTORY_CURRENT = HISTORY_SAVE;
+					memcpy(history_cmd_line[HISTORY_SAVE], buffer_cmd_line, cmd_line_len + 1);
+					
+					if(++HISTORY_SAVE >= MAX_HISTORY)
+					{
+						HISTORY_SAVE = 0;
+					}
+					
+					return TEST_CLI_commands[i].cmd_func(argc, argv);
+	
+				}
+			}
+	
+			if (strcmp(argv[0], "help") == 0) {
+				help_command();
+				return -1;
+			}
+	
+			debugprintf("Command not found.\r\n");
+			return -1;
+		}
 	}
 
 //	os_buffer_write_str(tx, "Command not found.\r\n");
@@ -605,10 +660,21 @@ static void help_command(void)
 	unsigned char i;
 	debugprintf("The currently registered commands are:\r\n");
 
-	for (i = 0; i < num_commands; i++) 
+	if(cli_which == DEF_CLI_WHICH_SMUX)
 	{
-		debugprintf("\t %s", commands[i].name);
-		debugprintf("\r\n");
+		for (i = 0; i < SMUX_num_commands; i++) 
+		{
+			debugprintf("\t %s", SMUX_commands[i].name);
+			debugprintf("\r\n");
+		}
+	}
+	else if(cli_which == DEF_CLI_WHICH_COMM_MON_CLI)
+	{
+		for (i = 0; i < TEST_CLI_num_commands; i++) 
+		{
+			debugprintf("\t %s", TEST_CLI_commands[i].name);
+			debugprintf("\r\n");
+		}
 	}
 
 	debugprintf("\r\n");
@@ -630,43 +696,4 @@ unsigned int str_to_dec(char *argv)
 
 
 
-
-#if 0
-void Cli_Uart0ISR()
-{
-//	getuartfifo((U32)R_UART4_BASE,&ubuf4);
-
-		U32 iir;
-		char ch;
-		iir = *(volatile U32*)(UART_BASE_0 + UART_IIR);
-		iir &= 0xf;
-		
-		switch(iir)
-		{
-//#ifdef CONFIG_UART_RX_INTERRUPT
-#if 1
-		case 6:
-			debugstring("UART Line Status Error(Overrun,Frame,Parity)\r\n");
-		case 4:
-		case 0xc:
-			while((*(volatile U32*)(UART_BASE_0 + UART_LSR)) & ULSR_DRDY)//data ready
-			{
-				ch = *(volatile U8*)(UART_BASE_0 + UART_RBR);
-//				*(volatile U8*)(R_UART0_BASE + UART_THR) = ch;
-//				*(volatile U8*)(UART_BASE_0 + UART_THR) = ch;
-
-				DEBUG_RX_POOL[DEBUG_RX_SAVE] = ch;
-				if(++DEBUG_RX_SAVE >= DEF_DEBUG_UART_RX_POOL_SIZE)
-				{
-					DEBUG_RX_SAVE = 0;
-				}
-			}
-			break;
-#endif
-		}
-
-	
-	
-}
-#endif
 

@@ -1,6 +1,6 @@
 #include "HalBoard.h"
 
-#include "main.h"
+#include "globalDefine.h"
 
 void sysClockInit(void);
 void Gpio_Init(void);
@@ -20,7 +20,7 @@ void SystemInit(void)
 	Gpio_Init();
 
 
-	Uart_Init();
+	
 
 	delayms(100);
 
@@ -39,6 +39,14 @@ void SystemInit(void)
 	{
 		op_mode = OP_OPT_BYPASS;
 	}
+	else if(rotarySwitch.RotarySwitchValue == 995)
+	{
+		op_mode = OP_OPT_TEST_GUI;
+	}
+	else if(rotarySwitch.RotarySwitchValue == 991)
+	{
+		op_mode = OP_OPT_TEST_CLI;
+	}
 	else if(rotarySwitch.RotarySwitchValue >= 500)
 	{
 		op_mode = OP_232_TO_OPTIC;
@@ -47,13 +55,15 @@ void SystemInit(void)
 	{
 		op_mode = OP_SMUX;
 	}
+
+	Uart_Init();
 	
 	InitInterrupt();		
 	
 	
 	Timer_Init();
 
-
+/*
 	debugprintf("Op Mode = %d\r\n", op_mode);
 		
 	debugstring("D2-MUX V1.0 \r\n");
@@ -64,7 +74,7 @@ void SystemInit(void)
 	delayms(100);
 
 	debugprintf("System Compiled at %s, %s\r\n", __DATE__, __TIME__);
-
+*/
 	statusLEDControl(5,100);
 
 	Comm_Led_Display();

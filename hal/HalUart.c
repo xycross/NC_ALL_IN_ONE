@@ -12,6 +12,8 @@ extern unsigned char DEBUG_RX_SAVE, DEBUG_RX_PROCESS;
 extern u8 op_mode;
 
 
+extern int debugch;
+
 extern const unsigned char Code_Confirm_Table[256];
 
 extern const unsigned char Code2_Confirm_Table[256];
@@ -35,6 +37,7 @@ void _MPOF_UART_ISR_(void);
 
 void Uart_Init(void)
 {
+	debugch = 3;
 	*R_PAF1 = 0x0000;
 
 	myUartConfig(DEBUG_UART_CH, DEBUG_CH_BAUDRATE, DATABITS_8, STOPBITS_1, UART_PARNONE);

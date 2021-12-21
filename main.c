@@ -1,5 +1,9 @@
-#include "main.h"
+#include "Hal.h"
+
+#include "globalDefine.h"
+
 #include "smux_main.h"
+#
 
 //#include "cli_n.h"
 
@@ -20,6 +24,14 @@ int main(void) {
 	if(op_mode == OP_SMUX)
 	{
 		smux_main();
+	}
+	else if(op_mode == OP_OPT_TEST_CLI)
+	{
+		CLI_main();
+	}
+	else if(op_mode == OP_OPT_TEST_GUI)
+	{
+		GUI_main();
 	}
 	else
 	{

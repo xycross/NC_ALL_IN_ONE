@@ -27,6 +27,9 @@
 
 #define DEF_DEBUG_UART_RX_POOL_SIZE		10
 
+#define	DEF_CLI_WHICH_SMUX			1
+#define	DEF_CLI_WHICH_COMM_MON_CLI	2
+
 
 enum term_color {
 	tBLACK = '0',
